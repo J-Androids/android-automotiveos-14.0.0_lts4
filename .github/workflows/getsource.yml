@@ -57,6 +57,7 @@ jobs:
         
     - name: Commit and push
       run: |
+        rm -rf .repo/project-objects/
         git add -A
         git commit -m "init"
         git push    
