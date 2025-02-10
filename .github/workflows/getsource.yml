@@ -1,0 +1,62 @@
+name: Get Android Source
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build:
+    runs-on: ubuntu-20.04
+    
+    steps:
+
+    - name: max
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 512
+        swap-size-mb: 1024
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-docker-images: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        echo "Free space:"
+        df -h
+        sudo apt-get update
+        sudo apt-get install -y git        
+        sudo apt autoremove -y
+        sudo apt autoclean -y
+        sudo apt clean -y
+        echo "Free space:"
+        df -h
+
+    - name: Install Repo
+      run: |
+        mkdir -p ~/bin
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        echo "PATH=$PATH:~/bin" >> $GITHUB_PATH
+        
+    - name: Sync Android source
+      run: |
+        repo init --partial-clone -b android-automotiveos-14.0.0_lts4 -u https://android.googlesource.com/platform/manifest
+        repo sync -c -j8 --no-tags --no-clone-bundle --current-branch
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions@bots.github.com"
+        
+    - name: Commit and push
+      run: |
+        git add -A
+        git commit -m "init"
+        git push    
